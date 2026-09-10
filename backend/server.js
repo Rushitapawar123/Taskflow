@@ -29,7 +29,7 @@ app.use('/api/auth', authRoutes);
 const boardRoutes = require('./routes/boardRoutes');
 app.use('/api/boards', boardRoutes);
 
-const listRoutes = require('./routes/listRoutes');
+const ListRoutes = require('./routes/listRoutes');
 app.use('/api/lists', listRoutes);
 
 const cardRoutes = require('./routes/cardRoutes');
@@ -56,7 +56,7 @@ io.on('connection', (socket) => {
     socket.on('boardUpdated', (boardId) => {
     socket.to(boardId).emit('refreshBoard');
   });
-  
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
