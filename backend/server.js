@@ -29,7 +29,7 @@ app.use('/api/auth', authRoutes);
 const boardRoutes = require('./routes/boardRoutes');
 app.use('/api/boards', boardRoutes);
 
-const ListRoutes = require('./routes/listRoutes');
+const listRoutes = require('./routes/ListRoutes');
 app.use('/api/lists', listRoutes);
 
 const cardRoutes = require('./routes/cardRoutes');
