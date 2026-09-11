@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   DndContext,
   closestCorners,
@@ -64,18 +65,19 @@ function BoardPage() {
     }
   };
 
-  const handleAddList = async (e) => {
-    e.preventDefault();
-    if (!newListTitle.trim()) return;
-    try {
-      await api.post("/lists", { title: newListTitle, boardId, order: lists.length });
-      setNewListTitle("");
-      fetchLists();
-      socket.emit("boardUpdated", boardId);
-    } catch (error) {
-      console.log("Error creating list:", error.response?.data);
-    }
-  };
+ const handleAddList = async (e) => {
+  e.preventDefault();
+  if (!newListTitle.trim()) return;
+  try {
+    await api.post("/lists", { title: newListTitle, boardId, order: lists.length });
+    setNewListTitle("");
+    fetchLists();
+    socket.emit("boardUpdated", boardId);
+    toast.success("List added");
+  } catch (error) {
+    toast.error("Failed to add list");
+  }
+};
 
   // "+ Add Card" button dabane par modal kholta hai
   const openAddCardModal = (listId) => {
@@ -85,18 +87,19 @@ function BoardPage() {
 
   // Add Card modal se title milne par naya card banata hai
   const handleAddCard = async (title) => {
-    try {
-      await api.post("/cards", {
-        title,
-        listId: activeListId,
-        order: cardsByList[activeListId]?.length || 0,
-      });
-      fetchCards(activeListId);
-      socket.emit("boardUpdated", boardId);
-    } catch (error) {
-      console.log("Error creating card:", error.response?.data);
-    }
-  };
+  try {
+    await api.post("/cards", {
+      title,
+      listId: activeListId,
+      order: cardsByList[activeListId]?.length || 0,
+    });
+    fetchCards(activeListId);
+    socket.emit("boardUpdated", boardId);
+    toast.success("Card added");
+  } catch (error) {
+    toast.error("Failed to add card");
+  }
+};
 
   // Card par click karne par details modal kholta hai
   const handleCardClick = (card) => {
@@ -106,22 +109,24 @@ function BoardPage() {
 
   // Details modal se Save dabane par card update karta hai
   const handleUpdateCard = async (cardId, updates) => {
-    try {
-      await api.put(`/cards/${cardId}`, updates);
-      fetchCards(selectedCard.list);
-      socket.emit("boardUpdated", boardId);
-    } catch (error) {
-      console.log("Error updating card:", error.response?.data);
-    }
-  };
+  try {
+    await api.put(`/cards/${cardId}`, updates);
+    fetchCards(selectedCard.list);
+    socket.emit("boardUpdated", boardId);
+    toast.success("Card updated");
+  } catch (error) {
+    toast.error("Failed to update card");
+  }
+};
 
   const handleDeleteCard = async (cardId, listId) => {
     try {
       await api.delete(`/cards/${cardId}`);
       fetchCards(listId);
       socket.emit("boardUpdated", boardId);
+      toast.success("Card deleted");
     } catch (error) {
-      console.log("Error deleting card:", error.response?.data);
+      toast.error("Failed to delete card");
     }
   };
 
