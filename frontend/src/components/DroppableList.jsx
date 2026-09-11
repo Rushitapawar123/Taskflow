@@ -2,7 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import SortableCard from "./SortableCard";
 
-function DroppableList({ list, cards, onAddCard, onDeleteCard }) {
+function DroppableList({ list, cards, onAddCard, onCardClick }) {
   const { setNodeRef } = useDroppable({ id: list._id });
 
   return (
@@ -12,7 +12,7 @@ function DroppableList({ list, cards, onAddCard, onDeleteCard }) {
       <div ref={setNodeRef} className="space-y-2 mb-3 min-h-[60px]">
         <SortableContext items={cards.map((c) => c._id)} strategy={verticalListSortingStrategy}>
           {cards.map((card) => (
-            <SortableCard key={card._id} card={{ ...card, list: list._id }} onDelete={onDeleteCard} />
+            <SortableCard key={card._id} card={{ ...card, list: list._id }} onCardClick={onCardClick} />
           ))}
         </SortableContext>
       </div>

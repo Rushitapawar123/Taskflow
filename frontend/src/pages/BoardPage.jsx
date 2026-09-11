@@ -12,6 +12,7 @@ import api from "../services/api";
 import socket from "../socket";
 import DroppableList from "../components/DroppableList";
 import AddCardModal from "../components/AddCardModal";
+import CardDetailsModal from "../components/CardDetailsModal";
 
 function BoardPage() {
   const { boardId } = useParams();
@@ -20,8 +21,12 @@ function BoardPage() {
   const [lists, setLists] = useState([]);
   const [cardsByList, setCardsByList] = useState({});
   const [newListTitle, setNewListTitle] = useState("");
+
   const [modalOpen, setModalOpen] = useState(false);
   const [activeListId, setActiveListId] = useState(null);
+
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -72,13 +77,13 @@ function BoardPage() {
     }
   };
 
-  // Modal kholta hai, yaad rakhta hai kis list ke liye card banana hai
+  // "+ Add Card" button dabane par modal kholta hai
   const openAddCardModal = (listId) => {
     setActiveListId(listId);
     setModalOpen(true);
   };
 
-  // Modal se title milne ke baad asli card backend mein banata hai
+  // Add Card modal se title milne par naya card banata hai
   const handleAddCard = async (title) => {
     try {
       await api.post("/cards", {
@@ -90,6 +95,23 @@ function BoardPage() {
       socket.emit("boardUpdated", boardId);
     } catch (error) {
       console.log("Error creating card:", error.response?.data);
+    }
+  };
+
+  // Card par click karne par details modal kholta hai
+  const handleCardClick = (card) => {
+    setSelectedCard(card);
+    setDetailsModalOpen(true);
+  };
+
+  // Details modal se Save dabane par card update karta hai
+  const handleUpdateCard = async (cardId, updates) => {
+    try {
+      await api.put(`/cards/${cardId}`, updates);
+      fetchCards(selectedCard.list);
+      socket.emit("boardUpdated", boardId);
+    } catch (error) {
+      console.log("Error updating card:", error.response?.data);
     }
   };
 
@@ -213,7 +235,7 @@ function BoardPage() {
               list={list}
               cards={cardsByList[list._id] || []}
               onAddCard={openAddCardModal}
-              onDeleteCard={handleDeleteCard}
+              onCardClick={handleCardClick}
             />
           ))}
         </div>
@@ -223,6 +245,14 @@ function BoardPage() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleAddCard}
+      />
+
+      <CardDetailsModal
+        card={selectedCard}
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        onSave={handleUpdateCard}
+        onDelete={handleDeleteCard}
       />
     </div>
   );
