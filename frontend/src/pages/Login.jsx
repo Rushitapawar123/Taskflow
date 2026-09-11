@@ -12,7 +12,7 @@ function Login() {
     try {
       const response = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", response.data.token);
-      navigate("/board/6aa11b9fddec7822e4c24052");
+      navigate("/boards");
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");
     }

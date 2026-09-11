@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import BoardPage from "./pages/BoardPage";
+import MyBoards from "./pages/MyBoards";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -11,6 +12,15 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/boards"
+          element={
+            <ProtectedRoute>
+              <MyBoards />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/board/:boardId"

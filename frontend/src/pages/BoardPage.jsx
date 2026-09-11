@@ -90,14 +90,22 @@ function BoardPage() {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">TaskFlow Board</h1>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
-        >
-          Logout
-        </button>
-      </div>
+  <div>
+    <button
+      onClick={() => navigate("/boards")}
+      className="text-sm text-blue-600 hover:underline mb-1"
+    >
+      ← Back to My Boards
+    </button>
+    <h1 className="text-2xl font-bold text-gray-800">TaskFlow Board</h1>
+  </div>
+  <button
+    onClick={handleLogout}
+    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+  >
+    Logout
+  </button>
+</div>
 
       {/* Add new list form */}
       <form onSubmit={handleAddList} className="mb-6 flex gap-2 max-w-md">

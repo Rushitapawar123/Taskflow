@@ -1,0 +1,90 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+
+function MyBoards() {
+  const navigate = useNavigate();
+  const [boards, setBoards] = useState([]);
+  const [newBoardTitle, setNewBoardTitle] = useState("");
+
+  useEffect(() => {
+    fetchBoards();
+  }, []);
+
+  const fetchBoards = async () => {
+    try {
+      const response = await api.get("/boards");
+      setBoards(response.data);
+    } catch (error) {
+      console.log("Error fetching boards:", error.response?.data);
+    }
+  };
+
+  const handleCreateBoard = async (e) => {
+    e.preventDefault();
+    if (!newBoardTitle.trim()) return;
+    try {
+      await api.post("/boards", { title: newBoardTitle });
+      setNewBoardTitle("");
+      fetchBoards();
+    } catch (error) {
+      console.log("Error creating board:", error.response?.data);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">My Boards</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+        >
+          Logout
+        </button>
+      </div>
+
+      <form onSubmit={handleCreateBoard} className="mb-8 flex gap-2 max-w-md">
+        <input
+          type="text"
+          placeholder="New board name"
+          value={newBoardTitle}
+          onChange={(e) => setNewBoardTitle(e.target.value)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          Create Board
+        </button>
+      </form>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {boards.map((board) => (
+          <div
+            key={board._id}
+            onClick={() => navigate(`/board/${board._id}`)}
+            className="bg-white rounded-xl shadow p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition"
+          >
+            <h2 className="font-semibold text-gray-800">{board.title}</h2>
+            <p className="text-xs text-gray-400 mt-2">Click to open</p>
+          </div>
+        ))}
+      </div>
+
+      {boards.length === 0 && (
+        <p className="text-gray-500 text-sm mt-6">
+          You don't have any boards yet. Create one above to get started.
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default MyBoards;
