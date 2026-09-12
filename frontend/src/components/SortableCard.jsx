@@ -31,16 +31,27 @@ function SortableCard({ card, onCardClick }) {
     >
       <p className="mb-2">{card.title}</p>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {card.priority && (
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${priorityColors[card.priority]}`}>
-            {card.priority}
-          </span>
-        )}
-        {card.dueDate && (
-          <span className={`text-xs px-2 py-0.5 rounded-full ${isOverdue ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
-            {new Date(card.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-          </span>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {card.priority && (
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${priorityColors[card.priority]}`}>
+              {card.priority}
+            </span>
+          )}
+          {card.dueDate && (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${isOverdue ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"}`}>
+              {new Date(card.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+            </span>
+          )}
+        </div>
+
+        {card.assignedTo?.name && (
+          <div
+            title={card.assignedTo.name}
+            className="w-6 h-6 rounded-full bg-blue-500 text-white text-xs font-semibold flex items-center justify-center"
+          >
+            {card.assignedTo.name.charAt(0).toUpperCase()}
+          </div>
         )}
       </div>
     </div>

@@ -65,6 +65,28 @@ function BoardPage() {
     }
   };
 
+  const handleRenameList = async (listId, newTitle) => {
+  try {
+    await api.put(`/lists/${listId}`, { title: newTitle });
+    fetchLists();
+    socket.emit("boardUpdated", boardId);
+    toast.success("List renamed");
+  } catch (error) {
+    toast.error("Failed to rename list");
+  }
+};
+
+const handleDeleteList = async (listId) => {
+  if (!window.confirm("Delete this list and all its cards?")) return;
+  try {
+    await api.delete(`/lists/${listId}`);
+    fetchLists();
+    socket.emit("boardUpdated", boardId);
+    toast.success("List deleted");
+  } catch (error) {
+    toast.error("Failed to delete list");
+  }
+};
  const handleAddList = async (e) => {
   e.preventDefault();
   if (!newListTitle.trim()) return;
@@ -233,18 +255,20 @@ function BoardPage() {
       </form>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {lists.map((list) => (
-            <DroppableList
-              key={list._id}
-              list={list}
-              cards={cardsByList[list._id] || []}
-              onAddCard={openAddCardModal}
-              onCardClick={handleCardClick}
-            />
-          ))}
-        </div>
-      </DndContext>
+  <div className="flex gap-4 overflow-x-auto pb-4">
+    {lists.map((list) => (
+      <DroppableList
+        key={list._id}
+        list={list}
+        cards={cardsByList[list._id] || []}
+        onAddCard={openAddCardModal}
+        onCardClick={handleCardClick}
+        onRenameList={handleRenameList}
+        onDeleteList={handleDeleteList}
+      />
+    ))}
+  </div>
+</DndContext>
 
       <AddCardModal
         isOpen={modalOpen}

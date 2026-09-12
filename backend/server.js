@@ -16,6 +16,7 @@ const io = new Server(server, {
 });
 
 connectDB();
+app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
@@ -47,6 +48,10 @@ io.on('connection', (socket) => {
   socket.on('joinBoard', (boardId) => {
     socket.join(boardId);
     console.log(`User joined board: ${boardId}`);
+  });
+
+    socket.on('joinUserRoom', (userId) => {
+    socket.join(`user-${userId}`);
   });
 
   socket.on('cardMoved', (data) => {

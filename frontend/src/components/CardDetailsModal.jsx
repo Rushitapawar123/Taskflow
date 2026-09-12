@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import CommentSection from "./CommentSection";
 
-function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete }) {
+function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete, boardMembers }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
+  const [assignedTo, setAssignedTo] = useState("");
 
   useEffect(() => {
     if (card) {
@@ -12,6 +14,7 @@ function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete }) {
       setDescription(card.description || "");
       setPriority(card.priority || "Medium");
       setDueDate(card.dueDate ? card.dueDate.split("T")[0] : "");
+      setAssignedTo(card.assignedTo?._id || card.assignedTo || "");
     }
   }, [card]);
 
@@ -23,13 +26,14 @@ function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete }) {
       description,
       priority,
       dueDate: dueDate || null,
+      assignedTo: assignedTo || null,
     });
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Card Details</h2>
 
         <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
@@ -49,7 +53,7 @@ function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete }) {
           className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Priority</label>
             <select
@@ -72,6 +76,26 @@ function CardDetailsModal({ card, isOpen, onClose, onSave, onDelete }) {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        <div className="mb-5">
+          <label className="block text-sm font-medium text-gray-600 mb-1">Assign To</label>
+          <select
+            value={assignedTo}
+            onChange={(e) => setAssignedTo(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Unassigned</option>
+            {(boardMembers || []).map((member) => (
+              <option key={member._id} value={member._id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="border-t pt-4 mb-4">
+          <CommentSection cardId={card._id} />
         </div>
 
         <div className="flex justify-between items-center">

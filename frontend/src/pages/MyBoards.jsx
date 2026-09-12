@@ -1,6 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import socket from "../socket";
+import toast from "react-hot-toast";
+
+// JWT token ke andar se userId nikalta hai (bina verify kiye, sirf display ke liye)
+function getUserIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.userId;
+  } catch {
+    return null;
+  }
+}
 
 function MyBoards() {
   const navigate = useNavigate();
@@ -9,6 +23,19 @@ function MyBoards() {
 
   useEffect(() => {
     fetchBoards();
+
+    const userId = getUserIdFromToken();
+    if (userId) {
+      socket.emit("joinUserRoom", userId);
+    }
+
+    socket.on("boardsUpdated", () => {
+      fetchBoards();
+    });
+
+    return () => {
+      socket.off("boardsUpdated");
+    };
   }, []);
 
   const fetchBoards = async () => {
@@ -27,8 +54,21 @@ function MyBoards() {
       await api.post("/boards", { title: newBoardTitle });
       setNewBoardTitle("");
       fetchBoards();
+      toast.success("Board created");
     } catch (error) {
-      console.log("Error creating board:", error.response?.data);
+      toast.error("Failed to create board");
+    }
+  };
+
+  const handleDeleteBoard = async (e, boardId) => {
+    e.stopPropagation(); // taaki click se board na khule
+    if (!window.confirm("Delete this board? This cannot be undone.")) return;
+    try {
+      await api.delete(`/boards/${boardId}`);
+      fetchBoards();
+      toast.success("Board deleted");
+    } catch (error) {
+      toast.error("Failed to delete board");
     }
   };
 
@@ -70,8 +110,15 @@ function MyBoards() {
           <div
             key={board._id}
             onClick={() => navigate(`/board/${board._id}`)}
-            className="bg-white rounded-xl shadow p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition"
+            className="bg-white rounded-xl shadow p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition relative group"
           >
+            <button
+              onClick={(e) => handleDeleteBoard(e, board._id)}
+              className="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-sm opacity-0 group-hover:opacity-100 transition"
+              title="Delete board"
+            >
+              ✕
+            </button>
             <h2 className="font-semibold text-gray-800">{board.title}</h2>
             <p className="text-xs text-gray-400 mt-2">Click to open</p>
           </div>

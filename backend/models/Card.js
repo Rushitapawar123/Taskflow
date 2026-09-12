@@ -18,6 +18,15 @@ const cardSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  priority: {
+    type: String,
+    enum: ['Low', 'Medium', 'High'],
+    default: 'Medium'
+  },
+  dueDate: {
+    type: Date,
+    default: null
+  },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
