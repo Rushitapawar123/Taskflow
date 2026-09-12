@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  baseURL: "https://taskflow-a0bm.onrender.com/api",
 });
 
-console.log("API URL:", `${import.meta.env.VITE_API_URL}/api`);
+console.log("API URL:", "https://taskflow-a0bm.onrender.com/api");
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
