@@ -1,6 +1,5 @@
 const Card = require('../models/Card');
 
-// Create Card
 exports.createCard = async (req, res) => {
   try {
     const { title, description, listId, order } = req.body;
@@ -18,29 +17,28 @@ exports.createCard = async (req, res) => {
   }
 };
 
-// Get all cards for a list
 exports.getCards = async (req, res) => {
   try {
     const { listId } = req.params;
-    const cards = await Card.find({ list: listId }).sort('order');
+    const cards = await Card.find({ list: listId })
+      .populate('assignedTo', 'name')
+      .sort('order');
     res.json(cards);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Update card (for drag-drop, edit, etc.)
 exports.updateCard = async (req, res) => {
   try {
     const { id } = req.params;
-    const card = await Card.findByIdAndUpdate(id, req.body, { new: true });
+    const card = await Card.findByIdAndUpdate(id, req.body, { new: true }).populate('assignedTo', 'name');
     res.json(card);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Delete card
 exports.deleteCard = async (req, res) => {
   try {
     const { id } = req.params;

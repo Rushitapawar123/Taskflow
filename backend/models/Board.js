@@ -5,6 +5,10 @@ const boardSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  color: {
+    type: String,
+    default: '#3b82f6'
+  },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
