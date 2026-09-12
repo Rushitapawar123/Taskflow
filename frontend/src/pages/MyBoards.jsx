@@ -4,7 +4,8 @@ import api from "../services/api";
 import socket from "../socket";
 import toast from "react-hot-toast";
 
-// JWT token ke andar se userId nikalta hai (bina verify kiye, sirf display ke liye)
+const boardColors = ["#3b82f6", "#22c55e", "#a855f7", "#ec4899", "#f59e0b", "#ef4444", "#14b8a6"];
+
 function getUserIdFromToken() {
   const token = localStorage.getItem("token");
   if (!token) return null;
@@ -20,22 +21,15 @@ function MyBoards() {
   const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [selectedColor, setSelectedColor] = useState(boardColors[0]);
 
   useEffect(() => {
     fetchBoards();
-
     const userId = getUserIdFromToken();
-    if (userId) {
-      socket.emit("joinUserRoom", userId);
-    }
+    if (userId) socket.emit("joinUserRoom", userId);
 
-    socket.on("boardsUpdated", () => {
-      fetchBoards();
-    });
-
-    return () => {
-      socket.off("boardsUpdated");
-    };
+    socket.on("boardsUpdated", () => fetchBoards());
+    return () => socket.off("boardsUpdated");
   }, []);
 
   const fetchBoards = async () => {
@@ -51,7 +45,7 @@ function MyBoards() {
     e.preventDefault();
     if (!newBoardTitle.trim()) return;
     try {
-      await api.post("/boards", { title: newBoardTitle });
+      await api.post("/boards", { title: newBoardTitle, color: selectedColor });
       setNewBoardTitle("");
       fetchBoards();
       toast.success("Board created");
@@ -61,7 +55,7 @@ function MyBoards() {
   };
 
   const handleDeleteBoard = async (e, boardId) => {
-    e.stopPropagation(); // taaki click se board na khule
+    e.stopPropagation();
     if (!window.confirm("Delete this board? This cannot be undone.")) return;
     try {
       await api.delete(`/boards/${boardId}`);
@@ -89,20 +83,37 @@ function MyBoards() {
         </button>
       </div>
 
-      <form onSubmit={handleCreateBoard} className="mb-8 flex gap-2 max-w-md">
-        <input
-          type="text"
-          placeholder="New board name"
-          value={newBoardTitle}
-          onChange={(e) => setNewBoardTitle(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Create Board
-        </button>
+      <form onSubmit={handleCreateBoard} className="mb-8 max-w-md">
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            placeholder="New board name"
+            value={newBoardTitle}
+            onChange={(e) => setNewBoardTitle(e.target.value)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Create Board
+          </button>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <span className="text-xs text-gray-500 mr-1">Color:</span>
+          {boardColors.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => setSelectedColor(color)}
+              style={{ backgroundColor: color }}
+              className={`w-6 h-6 rounded-full transition ${
+                selectedColor === color ? "ring-2 ring-offset-2 ring-gray-400" : ""
+              }`}
+            />
+          ))}
+        </div>
       </form>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -110,17 +121,20 @@ function MyBoards() {
           <div
             key={board._id}
             onClick={() => navigate(`/board/${board._id}`)}
-            className="bg-white rounded-xl shadow p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition relative group"
+            className="bg-white rounded-xl shadow overflow-hidden cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition relative group"
           >
-            <button
-              onClick={(e) => handleDeleteBoard(e, board._id)}
-              className="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-sm opacity-0 group-hover:opacity-100 transition"
-              title="Delete board"
-            >
-              ✕
-            </button>
-            <h2 className="font-semibold text-gray-800">{board.title}</h2>
-            <p className="text-xs text-gray-400 mt-2">Click to open</p>
+            <div style={{ backgroundColor: board.color || "#3b82f6" }} className="h-3" />
+            <div className="p-5">
+              <button
+                onClick={(e) => handleDeleteBoard(e, board._id)}
+                className="absolute top-3 right-3 text-gray-300 hover:text-red-500 text-sm opacity-0 group-hover:opacity-100 transition"
+                title="Delete board"
+              >
+                ✕
+              </button>
+              <h2 className="font-semibold text-gray-800">{board.title}</h2>
+              <p className="text-xs text-gray-400 mt-2">Click to open</p>
+            </div>
           </div>
         ))}
       </div>

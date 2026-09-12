@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+
+      import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import {
   DndContext,
   closestCorners,
@@ -11,9 +11,23 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import api from "../services/api";
 import socket from "../socket";
+import toast from "react-hot-toast";
 import DroppableList from "../components/DroppableList";
 import AddCardModal from "../components/AddCardModal";
 import CardDetailsModal from "../components/CardDetailsModal";
+import InviteModal from "../components/InviteModal";
+import MemberAvatars from "../components/MemberAvatars";
+
+function getUserIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.userId;
+  } catch {
+    return null;
+  }
+}
 
 function BoardPage() {
   const { boardId } = useParams();
@@ -29,6 +43,9 @@ function BoardPage() {
   const [selectedCard, setSelectedCard] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
+  const [boardDetails, setBoardDetails] = useState(null);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -37,10 +54,14 @@ function BoardPage() {
 
   useEffect(() => {
     fetchLists();
+    fetchBoardDetails();
     socket.emit("joinBoard", boardId);
+
     socket.on("refreshBoard", () => {
       fetchLists();
+      fetchBoardDetails();
     });
+
     return () => {
       socket.off("refreshBoard");
     };
@@ -65,81 +86,87 @@ function BoardPage() {
     }
   };
 
+  const fetchBoardDetails = async () => {
+    try {
+      const response = await api.get(`/boards/${boardId}`);
+      setBoardDetails(response.data);
+    } catch (error) {
+      console.log("Error fetching board details:", error.response?.data);
+    }
+  };
+
+  const handleAddList = async (e) => {
+    e.preventDefault();
+    if (!newListTitle.trim()) return;
+    try {
+      await api.post("/lists", { title: newListTitle, boardId, order: lists.length });
+      setNewListTitle("");
+      fetchLists();
+      socket.emit("boardUpdated", boardId);
+      toast.success("List added");
+    } catch (error) {
+      toast.error("Failed to add list");
+    }
+  };
+
   const handleRenameList = async (listId, newTitle) => {
-  try {
-    await api.put(`/lists/${listId}`, { title: newTitle });
-    fetchLists();
-    socket.emit("boardUpdated", boardId);
-    toast.success("List renamed");
-  } catch (error) {
-    toast.error("Failed to rename list");
-  }
-};
+    try {
+      await api.put(`/lists/${listId}`, { title: newTitle });
+      fetchLists();
+      socket.emit("boardUpdated", boardId);
+      toast.success("List renamed");
+    } catch (error) {
+      toast.error("Failed to rename list");
+    }
+  };
 
-const handleDeleteList = async (listId) => {
-  if (!window.confirm("Delete this list and all its cards?")) return;
-  try {
-    await api.delete(`/lists/${listId}`);
-    fetchLists();
-    socket.emit("boardUpdated", boardId);
-    toast.success("List deleted");
-  } catch (error) {
-    toast.error("Failed to delete list");
-  }
-};
- const handleAddList = async (e) => {
-  e.preventDefault();
-  if (!newListTitle.trim()) return;
-  try {
-    await api.post("/lists", { title: newListTitle, boardId, order: lists.length });
-    setNewListTitle("");
-    fetchLists();
-    socket.emit("boardUpdated", boardId);
-    toast.success("List added");
-  } catch (error) {
-    toast.error("Failed to add list");
-  }
-};
+  const handleDeleteList = async (listId) => {
+    if (!window.confirm("Delete this list and all its cards?")) return;
+    try {
+      await api.delete(`/lists/${listId}`);
+      fetchLists();
+      socket.emit("boardUpdated", boardId);
+      toast.success("List deleted");
+    } catch (error) {
+      toast.error("Failed to delete list");
+    }
+  };
 
-  // "+ Add Card" button dabane par modal kholta hai
   const openAddCardModal = (listId) => {
     setActiveListId(listId);
     setModalOpen(true);
   };
 
-  // Add Card modal se title milne par naya card banata hai
   const handleAddCard = async (title) => {
-  try {
-    await api.post("/cards", {
-      title,
-      listId: activeListId,
-      order: cardsByList[activeListId]?.length || 0,
-    });
-    fetchCards(activeListId);
-    socket.emit("boardUpdated", boardId);
-    toast.success("Card added");
-  } catch (error) {
-    toast.error("Failed to add card");
-  }
-};
+    try {
+      await api.post("/cards", {
+        title,
+        listId: activeListId,
+        order: cardsByList[activeListId]?.length || 0,
+      });
+      fetchCards(activeListId);
+      socket.emit("boardUpdated", boardId);
+      toast.success("Card added");
+    } catch (error) {
+      toast.error("Failed to add card");
+    }
+  };
 
-  // Card par click karne par details modal kholta hai
   const handleCardClick = (card) => {
     setSelectedCard(card);
     setDetailsModalOpen(true);
   };
 
-  // Details modal se Save dabane par card update karta hai
   const handleUpdateCard = async (cardId, updates) => {
-  try {
-    await api.put(`/cards/${cardId}`, updates);
-    fetchCards(selectedCard.list);
-    socket.emit("boardUpdated", boardId);
-    toast.success("Card updated");
-  } catch (error) {
-    toast.error("Failed to update card");
-  }
-};
+    try {
+      await api.put(`/cards/${cardId}`, updates);
+      fetchCards(selectedCard.list);
+      socket.emit("boardUpdated", boardId);
+      toast.success("Card updated");
+    } catch (error) {
+      toast.error("Failed to update card");
+    }
+  };
 
   const handleDeleteCard = async (cardId, listId) => {
     try {
@@ -149,6 +176,35 @@ const handleDeleteList = async (listId) => {
       toast.success("Card deleted");
     } catch (error) {
       toast.error("Failed to delete card");
+    }
+  };
+
+  const handleRenameBoard = async () => {
+    const newTitle = prompt("Enter new board name:", boardDetails?.title);
+    if (!newTitle || !newTitle.trim() || newTitle === boardDetails?.title) return;
+    try {
+      await api.put(`/boards/${boardId}`, { title: newTitle.trim() });
+      fetchBoardDetails();
+      toast.success("Board renamed");
+    } catch (error) {
+      toast.error("Failed to rename board");
+    }
+  };
+
+  const handleInviteMember = async (email) => {
+    await api.post(`/boards/${boardId}/invite`, { email });
+    fetchBoardDetails();
+    toast.success("Member invited!");
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    if (!window.confirm("Remove this member from the board?")) return;
+    try {
+      await api.delete(`/boards/${boardId}/members/${memberId}`);
+      fetchBoardDetails();
+      toast.success("Member removed");
+    } catch (error) {
+      toast.error("Failed to remove member");
     }
   };
 
@@ -228,14 +284,30 @@ const handleDeleteList = async (listId) => {
           >
             ← Back to My Boards
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">TaskFlow Board</h1>
+          <h1
+            onClick={handleRenameBoard}
+            className="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600"
+            title="Click to rename board"
+          >
+            {boardDetails?.title || "TaskFlow Board"}
+          </h1>
         </div>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
-        >
-          Logout
-        </button>
+
+        <div className="flex items-center gap-4">
+          {boardDetails?.members && <MemberAvatars members={boardDetails.members} />}
+          <button
+            onClick={() => setInviteModalOpen(true)}
+            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm"
+          >
+            + Invite
+          </button>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleAddList} className="mb-6 flex gap-2 max-w-md">
@@ -255,20 +327,20 @@ const handleDeleteList = async (listId) => {
       </form>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-  <div className="flex gap-4 overflow-x-auto pb-4">
-    {lists.map((list) => (
-      <DroppableList
-        key={list._id}
-        list={list}
-        cards={cardsByList[list._id] || []}
-        onAddCard={openAddCardModal}
-        onCardClick={handleCardClick}
-        onRenameList={handleRenameList}
-        onDeleteList={handleDeleteList}
-      />
-    ))}
-  </div>
-</DndContext>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {lists.map((list) => (
+            <DroppableList
+              key={list._id}
+              list={list}
+              cards={cardsByList[list._id] || []}
+              onAddCard={openAddCardModal}
+              onCardClick={handleCardClick}
+              onRenameList={handleRenameList}
+              onDeleteList={handleDeleteList}
+            />
+          ))}
+        </div>
+      </DndContext>
 
       <AddCardModal
         isOpen={modalOpen}
@@ -282,6 +354,16 @@ const handleDeleteList = async (listId) => {
         onClose={() => setDetailsModalOpen(false)}
         onSave={handleUpdateCard}
         onDelete={handleDeleteCard}
+        boardMembers={boardDetails?.members}
+      />
+
+      <InviteModal
+        isOpen={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onInvite={handleInviteMember}
+        members={boardDetails?.members}
+        currentUserIsOwner={boardDetails?.owner?._id === getUserIdFromToken()}
+        onRemoveMember={handleRemoveMember}
       />
     </div>
   );
