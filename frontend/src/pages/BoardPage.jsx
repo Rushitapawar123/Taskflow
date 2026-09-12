@@ -1,5 +1,5 @@
 
-      import { useState, useEffect } from "react";
+    import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -17,6 +17,8 @@ import AddCardModal from "../components/AddCardModal";
 import CardDetailsModal from "../components/CardDetailsModal";
 import InviteModal from "../components/InviteModal";
 import MemberAvatars from "../components/MemberAvatars";
+import SearchFilterBar from "../components/SearchFilterBar";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 function getUserIdFromToken() {
   const token = localStorage.getItem("token");
@@ -45,6 +47,8 @@ function BoardPage() {
 
   const [boardDetails, setBoardDetails] = useState(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
+  const [filters, setFilters] = useState({ search: "", priorities: [], assignee: "" });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -93,6 +97,18 @@ function BoardPage() {
     } catch (error) {
       console.log("Error fetching board details:", error.response?.data);
     }
+  };
+
+  // Filters ke hisaab se cards chhaanta hai
+  const getFilteredCards = (listId) => {
+    const cards = cardsByList[listId] || [];
+    return cards.filter((card) => {
+      const matchesSearch = card.title.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesPriority = filters.priorities.length === 0 || filters.priorities.includes(card.priority);
+      const matchesAssignee =
+        !filters.assignee || card.assignedTo?._id === filters.assignee || card.assignedTo === filters.assignee;
+      return matchesSearch && matchesPriority && matchesAssignee;
+    });
   };
 
   const handleAddList = async (e) => {
@@ -275,7 +291,7 @@ function BoardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen p-6" style={{ backgroundColor: "var(--color-bg)" }}>
       <div className="flex justify-between items-center mb-6">
         <div>
           <button
@@ -286,14 +302,15 @@ function BoardPage() {
           </button>
           <h1
             onClick={handleRenameBoard}
-            className="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600"
+            className="text-2xl font-bold cursor-pointer hover:text-blue-600"
+            style={{ color: "var(--color-text)" }}
             title="Click to rename board"
           >
             {boardDetails?.title || "TaskFlow Board"}
           </h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {boardDetails?.members && <MemberAvatars members={boardDetails.members} />}
           <button
             onClick={() => setInviteModalOpen(true)}
@@ -301,6 +318,7 @@ function BoardPage() {
           >
             + Invite
           </button>
+          <ThemeSwitcher />
           <button
             onClick={handleLogout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition text-sm"
@@ -326,13 +344,18 @@ function BoardPage() {
         </button>
       </form>
 
+      <SearchFilterBar
+        members={boardDetails?.members}
+        onFilterChange={setFilters}
+      />
+
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {lists.map((list) => (
             <DroppableList
               key={list._id}
               list={list}
-              cards={cardsByList[list._id] || []}
+              cards={getFilteredCards(list._id)}
               onAddCard={openAddCardModal}
               onCardClick={handleCardClick}
               onRenameList={handleRenameList}

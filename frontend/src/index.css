@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+:root[data-theme="light"] {
+  --color-bg: #f9fafb;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-text-muted: #6b7280;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-border: #e5e7eb;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #111827;
+  --color-surface: #1f2937;
+  --color-text: #f3f4f6;
+  --color-text-muted: #9ca3af;
+  --color-accent: #60a5fa;
+  --color-accent-hover: #3b82f6;
+  --color-border: #374151;
+}
+
+:root[data-theme="ocean"] {
+  --color-bg: #ecfeff;
+  --color-surface: #ffffff;
+  --color-text: #164e63;
+  --color-text-muted: #0e7490;
+  --color-accent: #06b6d4;
+  --color-accent-hover: #0891b2;
+  --color-border: #a5f3fc;
+}
+
+:root[data-theme="forest"] {
+  --color-bg: #f0fdf4;
+  --color-surface: #ffffff;
+  --color-text: #14532d;
+  --color-text-muted: #16a34a;
+  --color-accent: #22c55e;
+  --color-accent-hover: #16a34a;
+  --color-border: #bbf7d0;
+}
+
+:root[data-theme="sunset"] {
+  --color-bg: #fff7ed;
+  --color-surface: #ffffff;
+  --color-text: #7c2d12;
+  --color-text-muted: #ea580c;
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-border: #fed7aa;
+}
+
+:root[data-theme="purple"] {
+  --color-bg: #faf5ff;
+  --color-surface: #ffffff;
+  --color-text: #581c87;
+  --color-text-muted: #9333ea;
+  --color-accent: #a855f7;
+  --color-accent-hover: #9333ea;
+  --color-border: #e9d5ff;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s, color 0.2s;
+}
