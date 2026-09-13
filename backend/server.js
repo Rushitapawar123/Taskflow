@@ -43,6 +43,9 @@ app.get("/", (req, res) => {
   res.send("TaskFlow API is running");
 });
 
+const activityRoutes = require('./routes/activityRoutes');
+app.use('/api/activities', activityRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 io.on("connection", (socket) => {

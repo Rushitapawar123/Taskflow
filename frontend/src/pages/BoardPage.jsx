@@ -1,5 +1,5 @@
 
-    import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   DndContext,
@@ -19,6 +19,7 @@ import InviteModal from "../components/InviteModal";
 import MemberAvatars from "../components/MemberAvatars";
 import SearchFilterBar from "../components/SearchFilterBar";
 import ThemeSwitcher from "../components/ThemeSwitcher";
+import ActivityPanel from "../components/ActivityPanel";
 
 function getUserIdFromToken() {
   const token = localStorage.getItem("token");
@@ -49,6 +50,8 @@ function BoardPage() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   const [filters, setFilters] = useState({ search: "", priorities: [], assignee: "" });
+
+  const [activityPanelOpen, setActivityPanelOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -99,7 +102,6 @@ function BoardPage() {
     }
   };
 
-  // Filters ke hisaab se cards chhaanta hai
   const getFilteredCards = (listId) => {
     const cards = cardsByList[listId] || [];
     return cards.filter((card) => {
@@ -175,8 +177,16 @@ function BoardPage() {
 
   const handleUpdateCard = async (cardId, updates) => {
     try {
-      await api.put(`/cards/${cardId}`, updates);
-      fetchCards(selectedCard.list);
+      const response = await api.put(`/cards/${cardId}`, updates);
+
+      const targetListId = updates.list || selectedCard?.list || findListOfCard(cardId);
+      fetchCards(targetListId);
+
+      if (selectedCard?.list && selectedCard.list !== targetListId) {
+        fetchCards(selectedCard.list);
+      }
+
+      setSelectedCard(response.data);
       socket.emit("boardUpdated", boardId);
       toast.success("Card updated");
     } catch (error) {
@@ -318,6 +328,12 @@ function BoardPage() {
           >
             + Invite
           </button>
+          <button
+            onClick={() => setActivityPanelOpen(true)}
+            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm"
+          >
+            📋 Activity
+          </button>
           <ThemeSwitcher />
           <button
             onClick={handleLogout}
@@ -387,6 +403,12 @@ function BoardPage() {
         members={boardDetails?.members}
         currentUserIsOwner={boardDetails?.owner?._id === getUserIdFromToken()}
         onRemoveMember={handleRemoveMember}
+      />
+
+      <ActivityPanel
+        boardId={boardId}
+        isOpen={activityPanelOpen}
+        onClose={() => setActivityPanelOpen(false)}
       />
     </div>
   );
